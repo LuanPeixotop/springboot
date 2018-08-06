@@ -6,16 +6,16 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
-import br.com.alura.enviadorEmail.enviadorEmail.EmailService;
 import br.com.alura.listavip.model.Convidado;
-import br.com.alura.listavip.repository.ConvidadoRepository;
+import br.com.alura.listavip.service.ConvidadoService;
 
 @Controller
 public class ConvidadoController {
 	
 	@Autowired
-	private ConvidadoRepository repository;
+	private ConvidadoService service;
 	
 	@RequestMapping("/")
 	public String index(){
@@ -24,23 +24,20 @@ public class ConvidadoController {
 	
 	@RequestMapping("listaconvidados")
 	public String listaConvidados(Model model){
-		Iterable<Convidado> convidados = repository.findAll();
+		Iterable<Convidado> convidados = service.obterTodosOsConvidados();
 		model.addAttribute("convidados", convidados);
 		return "listaconvidados";
 	}
 	
 	@RequestMapping(value= "salvar", method = RequestMethod.POST)
-	public String salvar(@RequestParam("nome") String nome, @RequestParam("email") String email,
+	public ModelAndView salvar(@RequestParam("nome") String nome, @RequestParam("email") String email,
 	                   @RequestParam("telefone") String telefone, Model model ){
 
 	    Convidado novoConvidado = new Convidado(nome, email, telefone);
-	    repository.save(novoConvidado);
-	    new EmailService().enviar(nome, email);
+	    service.salvar(novoConvidado);
+	    service.enviarEmail(nome, email);
 
-	    Iterable<Convidado> convidados = repository.findAll();
-	    model.addAttribute("convidados", convidados);
-
-	    return "listaconvidados";
+	    return new ModelAndView("redirect:/listaconvidados");
 	}
 
 }
